@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Resume Point Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F5F3EE;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE7;
+    --border: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1A1816;
+    --text-muted: #6B6560;
+    --text-hint: #9E9892;
+    --accent: #2B4D3F;
+    --accent-light: #E8F0ED;
+    --accent-text: #1A3329;
+    --warn: #8B5E1A;
+    --warn-light: #FBF3E4;
+    --err: #8B1A1A;
+    --err-light: #FBE8E8;
+    --info: #1A3D6B;
+    --info-light: #E8EEF7;
+    --pink: #7A2B52;
+    --pink-light: #F7EAF1;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  header {
+    background: var(--accent);
+    padding: 28px 40px 24px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    color: #fff;
+    font-weight: 400;
+    letter-spacing: -0.3px;
+  }
+
+  header p {
+    font-size: 13px;
+    color: rgba(255,255,255,0.65);
+    margin-top: 3px;
+  }
+
+  .api-badge {
+    font-size: 11px;
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.8);
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .api-dot { width: 7px; height: 7px; border-radius: 50%; background: #6FCF97; }
+
+  .container { max-width: 820px; margin: 0 auto; padding: 32px 24px 60px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-bottom: 18px;
+  }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+  .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+
+  .field-hint { font-size: 11px; color: var(--text-hint); margin-top: 3px; }
+
+  input[type="text"], textarea {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    width: 100%;
+    transition: border-color 0.15s;
+    resize: vertical;
+  }
+
+  input[type="text"]:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+  }
+
+  .topic-input-row { display: flex; gap: 8px; }
+  .topic-input-row input { flex: 1; }
+
+  .btn-add {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+  }
+  .btn-add:hover { opacity: 0.85; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 4px; }
+
+  .tag {
+    font-size: 12px;
+    padding: 3px 10px 3px 12px;
+    background: var(--pink-light);
+    color: var(--pink);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid rgba(122,43,82,0.15);
+  }
+
+  .tag-x { cursor: pointer; font-size: 15px; line-height: 1; opacity: 0.5; }
+  .tag-x:hover { opacity: 1; }
+
+  .collapse-btn {
+    background: none;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 500;
+  }
+  .collapse-btn:hover { opacity: 0.7; }
+
+  .override-grid { display: grid; gap: 8px; }
+  .override-row { display: grid; grid-template-columns: 48px 1fr; gap: 8px; align-items: center; }
+  .override-slot { font-size: 12px; font-weight: 500; color: var(--text-hint); }
+
+  .divider { height: 1px; background: var(--border); margin: 18px 0; }
+
+  .btn-generate {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 13px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+  .btn-generate:hover { opacity: 0.88; }
+  .btn-generate:active { transform: scale(0.99); }
+  .btn-generate:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* API Key section */
+  .key-section {
+    background: var(--info-light);
+    border: 1px solid rgba(26,61,107,0.15);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .key-section label { color: var(--info); font-size: 13px; font-weight: 500; }
+  .key-section input { background: #fff; margin-top: 6px; }
+  .key-note { font-size: 11px; color: var(--info); margin-top: 5px; opacity: 0.8; }
+
+  /* Progress */
+  #output-section { display: none; }
+
+  .progress-wrap { margin-bottom: 8px; }
+  .progress-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; width: 0%; }
+
+  .status-bar {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 10px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+  }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid var(--border-strong);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-box {
+    background: var(--err-light);
+    border: 1px solid rgba(139,26,26,0.2);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--err);
+    margin-bottom: 14px;
+  }
+
+  /* Phase headers */
+  .phase-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+
+  .phase-pill {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+  .pill-research { background: var(--info-light); color: var(--info); }
+  .pill-output { background: var(--accent-light); color: var(--accent-text); }
+
+  .toggle-btn {
+    background: none;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .toggle-btn:hover { color: var(--text); }
+
+  /* Skill blocks */
+  .skill-block {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 10px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .skill-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .skill-header-left { display: flex; align-items: center; gap: 8px; }
+
+  .skill-name { font-size: 13px; font-weight: 500; }
+
+  .skill-body { padding: 12px 14px; }
+
+  .research-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 5px 0;
+    padding-left: 12px;
+    border-left: 2px solid var(--border-strong);
+    line-height: 1.5;
+  }
+
+  /* Point groups */
+  .point-group { margin-bottom: 13px; }
+  .point-label {
+    font-size: 11px;
+    color: var(--text-hint);
+    font-weight: 500;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .point-text {
+    font-size: 13px;
+    line-height: 1.65;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: border-color 0.15s, background 0.15s;
+    user-select: none;
+  }
+  .point-text:hover { border-color: var(--border-strong); background: #fff; }
+  .point-text.copied { border-color: #1D9E75; background: #E8F5EF; }
+
+  .char-bar { height: 3px; border-radius: 2px; margin-top: 5px; transition: width 0.3s; }
+  .bar-ok { background: #1D9E75; }
+  .bar-warn { background: #BA7517; }
+  .bar-err { background: #C0392B; }
+
+  .char-label { font-size: 11px; margin-top: 3px; }
+  .c-ok { color: #1A7A54; }
+  .c-warn { color: var(--warn); }
+  .c-err { color: var(--err); }
+
+  /* Badges */
+  .badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .b-valid { background: var(--accent-light); color: var(--accent-text); }
+  .b-fixed { background: var(--info-light); color: var(--info); }
+  .b-warn { background: var(--warn-light); color: var(--warn); }
+  .b-seeded { background: var(--pink-light); color: var(--pink); }
+
+  /* Status dot */
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-pending { background: var(--border-strong); }
+  .dot-working { background: #E8A020; }
+  .dot-retrying { background: #3A6BC4; }
+  .dot-done { background: #1D9E75; }
+
+  /* Stats */
+  .stats-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .stat-pill {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    background: var(--surface);
+  }
+
+  /* Regen button */
+  .btn-regen {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    padding: 5px 12px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  .btn-regen:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-regen:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .section-gap { margin-bottom: 24px; }
+
+  @media (max-width: 600px) {
+    .row { grid-template-columns: 1fr; }
+    header { padding: 20px; flex-direction: column; align-items: flex-start; gap: 10px; }
+    .container { padding: 20px 16px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Resume Point Generator</h1>
+    <p>Research · Build · Write · Validate — 40 points, every time.</p>
+  </div>
+  <div class="api-badge"><div class="api-dot"></div> Powered by Claude</div>
+</header>
+
+<div class="container">
+
+  <!-- API Key -->
+  <div class="key-section">
+    <label>Anthropic API Key</label>
+    <input type="password" id="api-key" placeholder="sk-ant-..." />
+    <p class="key-note">Your key is used only in this browser session and never stored or sent anywhere except directly to api.anthropic.com.</p>
+  </div>
+
+  <!-- Input Card -->
+  <div class="card">
+    <div class="card-title">Role inputs</div>
+
+    <div class="row">
+      <div class="field">
+        <label>Role they currently have</label>
+        <input type="text" id="have-role" placeholder="e.g. High School History Teacher" />
+      </div>
+      <div class="field">
+        <label>Role they want to get</label>
+        <input type="text" id="get-role" placeholder="e.g. Instructional Designer" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Role context <span style="font-weight:300;color:var(--text-hint)">(optional)</span></label>
+      <textarea id="context" rows="2" placeholder="e.g. This was also an operations role involving scheduling, onboarding, and food & beverage management..."></textarea>
+      <span class="field-hint">Background on the nature of the role — shapes how transferable skills are framed.</span>
+    </div>
+
+    <div class="field">
+      <label>Must-include topics <span style="font-weight:300;color:var(--text-hint)">(optional)</span></label>
+      <div class="topic-input-row">
+        <input type="text" id="topic-input" placeholder="e.g. scheduling, booking travel, LMS management" onkeydown="handleTopicKey(event)" />
+        <button class="btn-add" onclick="addTopics()">Add</button>
+      </div>
+      <span class="field-hint">Press Enter or Add — each topic is guaranteed a slot in the skill framework.</span>
+      <div class="tags" id="topic-tags"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="collapse-btn" id="override-toggle" onclick="toggleOverrides()">+ Override S1–S3 with predefined skills</button>
+    <div id="override-section" style="display:none;">
+      <div class="override-grid">
+        <div class="override-row"><span class="override-slot">S1</span><input type="text" id="s1" placeholder="Leave blank to auto-generate" /></div>
+        <div class="override-row"><span class="override-slot">S2</span><input type="text" id="s2" placeholder="Leave blank to auto-generate" /></div>
+        <div class="override-row"><span class="override-slot">S3</span><input type="text" id="s3" placeholder="Leave blank to auto-generate" /></div>
+      </div>
+      <p class="field-hint" style="margin: 6px 0 14px;">Write the full skill description for these slots. Must-include topics fill remaining open slots automatically.</p>
+    </div>
+
+    <button class="btn-generate" id="generate-btn" onclick="startGeneration()">Generate 40 Resume Points</button>
+  </div>
+
+  <!-- Output -->
+  <div id="output-section">
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+    </div>
+    <div class="status-bar" id="status-bar"></div>
+    <div id="error-container"></div>
+
+    <div id="research-container" class="section-gap" style="display:none;">
+      <div class="phase-header">
+        <span class="phase-pill pill-research">Research framework</span>
+        <button class="toggle-btn" onclick="toggleResearch()"><span id="r-icon">▼</span> <span id="r-label">Hide</span></button>
+      </div>
+      <div id="research-content"></div>
+    </div>
+
+    <div id="points-container" style="display:none;">
+      <div class="phase-header">
+        <span class="phase-pill pill-output">40 Resume Points</span>
+        <span style="font-size:12px;color:var(--text-hint);">Click any point to copy</span>
+      </div>
+      <div class="stats-row" id="stats-row"></div>
+      <div id="points-content"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const MIN = 225, MAX = 300, GEN_COUNT = 7, MAX_RETRY = 3;
+let researchData = null, allPoints = {}, topics = [], researchVisible = true;
+
+function handleTopicKey(e) { if (e.key === 'Enter') { e.preventDefault(); addTopics(); } }
+
+function addTopics() {
+  const inp = document.getElementById('topic-input');
+  inp.value.split(',').map(t => t.trim()).filter(Boolean).forEach(t => { if (!topics.includes(t)) topics.push(t); });
+  inp.value = '';
+  renderTags();
+}
+
+function removeTag(t) { topics = topics.filter(x => x !== t); renderTags(); }
+
+function renderTags() {
+  document.getElementById('topic-tags').innerHTML = topics.map(t =>
+    `<div class="tag">${t}<span class="tag-x" onclick="removeTag(${JSON.stringify(t)})">×</span></div>`).join('');
+}
+
+function toggleOverrides() {
+  const s = document.getElementById('override-section'), btn = document.getElementById('override-toggle');
+  const open = s.style.display === 'none';
+  s.style.display = open ? 'block' : 'none';
+  btn.textContent = open ? '— Hide S1–S3 overrides' : '+ Override S1–S3 with predefined skills';
+}
+
+function toggleResearch() {
+  researchVisible = !researchVisible;
+  document.getElementById('research-content').style.display = researchVisible ? 'block' : 'none';
+  document.getElementById('r-icon').textContent = researchVisible ? '▼' : '▶';
+  document.getElementById('r-label').textContent = researchVisible ? 'Hide' : 'Show';
+}
+
+function setSpinner(text, pct) {
+  document.getElementById('status-bar').innerHTML = `<div class="spinner"></div><span>${text}</span>`;
+  if (pct !== undefined) document.getElementById('progress').style.width = pct + '%';
+}
+
+function showError(msg) { document.getElementById('error-container').innerHTML = `<div class="error-box">${msg}</div>`; }
+
+function inRange(n) { return n >= MIN && n <= MAX; }
+function charCls(n) { return !inRange(n) ? 'c-err' : (n < 235 || n > 290) ? 'c-warn' : 'c-ok'; }
+function barCls(n) { return !inRange(n) ? 'bar-err' : (n < 235 || n > 290) ? 'bar-warn' : 'bar-ok'; }
+function barW(n) { return Math.max(0, Math.min(100, ((n - MIN) / (MAX - MIN)) * 100)); }
+
+async function api(system, user, maxTok) {
+  const key = document.getElementById('api-key').value.trim();
+  if (!key) throw new Error('Please enter your Anthropic API key above.');
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: maxTok || 5000, system, messages: [{ role: 'user', content: user }] })
+  });
+  if (!res.ok) { const e = await res.text(); throw new Error(`API ${res.status}: ${e}`); }
+  const d = await res.json();
+  return d.content[0].text;
+}
+
+function parseJ(raw) { return JSON.parse(raw.replace(/```json|```/g, '').trim()); }
+
+async function startGeneration() {
+  const haveRole = document.getElementById('have-role').value.trim();
+  const getRole = document.getElementById('get-role').value.trim();
+  const context = document.getElementById('context').value.trim();
+  const s1 = document.getElementById('s1').value.trim();
+  const s2 = document.getElementById('s2').value.trim();
+  const s3 = document.getElementById('s3').value.trim();
+  if (!haveRole || !getRole) { showError('Please enter both roles.'); return; }
+  if (!document.getElementById('api-key').value.trim()) { showError('Please enter your Anthropic API key.'); return; }
+
+  document.getElementById('generate-btn').disabled = true;
+  document.getElementById('output-section').style.display = 'block';
+  document.getElementById('error-container').innerHTML = '';
+  document.getElementById('research-container').style.display = 'none';
+  document.getElementById('points-container').style.display = 'none';
+  allPoints = {};
+
+  try {
+    setSpinner('Researching roles and building skill framework...', 8);
+    researchData = await doResearch(haveRole, getRole, context, s1, s2, s3, topics);
+    renderResearch(researchData);
+    document.getElementById('research-container').style.display = 'block';
+    document.getElementById('points-container').style.display = 'block';
+    document.getElementById('points-content').innerHTML = '';
+    renderSkeletons();
+
+    for (let i = 0; i < researchData.skills.length; i++) {
+      const skill = researchData.skills[i];
+      setSpinner(`Generating S${skill.id}: "${skill.overarching}" (${i+1}/10)...`, 20 + Math.round((i / 10) * 75));
+      updateDot(skill.id, 'working');
+      allPoints[skill.id] = await genAndValidate(haveRole, getRole, skill);
+      updateDot(skill.id, 'done');
+      renderSkillPoints(skill.id);
+      updateStats();
+    }
+
+    document.getElementById('progress').style.width = '100%';
+    const valid = Object.values(allPoints).flat().filter(p => inRange(p.text.length)).length;
+    document.getElementById('status-bar').innerHTML = `<span style="color:#1A7A54;font-size:13px;font-weight:500;">✓ Done — ${valid}/40 points in range. Click any point to copy it.</span>`;
+  } catch(e) {
+    showError(e.message);
+    document.getElementById('status-bar').innerHTML = '';
+  }
+  document.getElementById('generate-btn').disabled = false;
+}
+
+async function doResearch(haveRole, getRole, context, s1, s2, s3, topics) {
+  const fullOverrides = [[1,s1],[2,s2],[3,s3]].filter(([,v]) => v);
+  const usedSlots = fullOverrides.map(([i]) => i);
+  const openSlots = [1,2,3,4,5,6,7,8,9,10].filter(i => !usedSlots.includes(i));
+
+  const overTxt = fullOverrides.length
+    ? `\nFull skill overrides — use these exactly:\n${fullOverrides.map(([i,v]) => `S${i}: ${v}`).join('\n')}` : '';
+  const topTxt = topics.length
+    ? `\nMust-include topic seeds — distribute across open slots (${openSlots.join(',')}), one per slot. Build a full overarching skill + 4 sub-skills around each. Topics: ${topics.join(', ')}` : '';
+  const ctxTxt = context ? `\nRole context: ${context}` : '';
+
+  const raw = await api(
+    `You are a professional resume strategist. Output ONLY valid JSON — no prose, no markdown.`,
+    `Research both roles:
+- Role they HAVE: "${haveRole}"
+- Role they want to GET: "${getRole}"${ctxTxt}${overTxt}${topTxt}
+
+Identify 10 overarching transferable skills, prioritized by importance to the TARGET role. For each, write 4 unique specific sub-skills.
+
+Output ONLY this JSON:
+{
+  "haveRole": "...", "getRole": "...",
+  "skills": [{
+    "id": 1, "overarching": "Short theme (max 110 chars)",
+    "description": "One sentence (max 170 chars)",
+    "seeded": false, "seedTopic": null,
+    "subs": [
+      {"id":"1.1","text":"Sub-skill action (max 170 chars)"},
+      {"id":"1.2","text":"Sub-skill action (max 170 chars)"},
+      {"id":"1.3","text":"Sub-skill action (max 170 chars)"},
+      {"id":"1.4","text":"Sub-skill action (max 170 chars)"}
+    ]
+  }]
+}
+Set seeded:true and seedTopic for any must-include topic slot. Produce exactly 10 skill objects.`, 3500);
+  return parseJ(raw);
+}
+
+async function genAndValidate(haveRole, getRole, skill) {
+  let candidates = await genCandidates(haveRole, getRole, skill, GEN_COUNT);
+  let best = pickBest(candidates, skill.id);
+  const failing = [1,2,3,4].filter(v => !best[v] || !inRange(best[v].text.length));
+
+  for (let attempt = 0; attempt < MAX_RETRY && failing.length; attempt++) {
+    updateDot(skill.id, 'retrying');
+    const retried = await retryFailing(haveRole, getRole, skill, [...failing], best);
+    retried.forEach(p => {
+      if (inRange(p.text.length)) {
+        best[p.version] = { ...p, wasRetried: true };
+        const idx = failing.indexOf(p.version);
+        if (idx > -1) failing.splice(idx, 1);
+      }
+    });
+  }
+
+  return [1,2,3,4].map(v => best[v] || { skillId: skill.id, version: v, text: '(Could not generate a valid point — click Regenerate.)', wasRetried: false, valid: false });
+}
+
+function pickBest(candidates, skillId) {
+  const best = {};
+  [1,2,3,4].forEach(v => {
+    const pool = candidates.filter(p => p.version === v);
+    const valid = pool.filter(p => inRange(p.text.length));
+    const src = valid.length ? valid : pool;
+    if (src.length) { src.sort((a,b) => Math.abs(a.text.length-262)-Math.abs(b.text.length-262)); best[v] = { ...src[0], wasRetried: false }; }
+  });
+  return best;
+}
+
+async function genCandidates(haveRole, getRole, skill, count) {
+  const orders = [[1,2,3,4],[4,1,2,3],[3,4,1,2],[2,3,4,1]];
+  try {
+    const raw = await api(
+      `You are a professional resume writer specializing in career transitions. Output ONLY valid JSON — no prose, no markdown.`,
+      `Write ${count} resume bullet point candidates for skill S${skill.id} for someone moving from "${haveRole}" to "${getRole}".
+
+SKILL: ${skill.overarching}
+Sub-skills:
+${skill.subs.map(s=>`  ${s.id}: ${s.text}`).join('\n')}
+
+Write ${count} versions. Sub-skill rotation orders:
+Version 1: ${orders[0].join(',')} | Version 2: ${orders[1].join(',')} | Version 3: ${orders[2].join(',')} | Version 4: ${orders[3].join(',')}
+Versions 5–${count}: any order (backup candidates)
+
+STRICT RULES:
+1. CHARACTERS: 225–300 inclusive. Count carefully. Target 255–275.
+2. Past-tense action verb start. Never "I" or personal pronouns.
+3. Exactly ONE whole number per point. No percentages unless unavoidable.
+4. Outcome at end — NOT "resulting in X". Write "to improve X" or "driving Y".
+5. One sentence only. No mid-sentence periods.
+6. 6–8 distinct action verbs across all versions.
+7. Past tense throughout.
+
+COUNTING INSTRUCTION: Before finalizing each point, count its characters. Under 225 → add specific detail or outcome phrase. Over 300 → cut most redundant clause.
+
+Output ONLY:
+{"points":[
+  {"skillId":${skill.id},"version":1,"text":"..."},
+  {"skillId":${skill.id},"version":2,"text":"..."},
+  {"skillId":${skill.id},"version":3,"text":"..."},
+  {"skillId":${skill.id},"version":4,"text":"..."},
+  {"skillId":${skill.id},"version":5,"text":"..."},
+  {"skillId":${skill.id},"version":6,"text":"..."},
+  {"skillId":${skill.id},"version":7,"text":"..."}
+]}`, 3000);
+    return parseJ(raw).points || [];
+  } catch(e) { return []; }
+}
+
+async function retryFailing(haveRole, getRole, skill, failVers, best) {
+  const orders = {1:[1,2,3,4],2:[4,1,2,3],3:[3,4,1,2],4:[2,3,4,1]};
+  const details = failVers.map(v => {
+    const ex = best[v]; const n = ex ? ex.text.length : 0;
+    const issue = !ex ? 'no point generated'
+      : n < MIN ? `TOO SHORT: ${n} chars — ADD ${MIN-n}+ more characters`
+      : `TOO LONG: ${n} chars — CUT ${n-MAX}+ characters`;
+    return `Version ${v} (order: ${orders[v].join(',')})\nIssue: ${issue}${ex?`\nCurrent: "${ex.text}"`:''}`;
+  }).join('\n\n');
+
+  try {
+    const raw = await api(
+      `You are a professional resume writer. Output ONLY valid JSON. No markdown.`,
+      `Fix ONLY these out-of-range resume points for skill S${skill.id}.
+
+SKILL: ${skill.overarching}
+Sub-skills:
+${skill.subs.map(s=>`  ${s.id}: ${s.text}`).join('\n')}
+
+POINTS TO FIX:
+${details}
+
+CRITICAL: Each fixed point MUST be 225–300 characters. Count every character including spaces.
+- Too short → add specific outcome, context detail, or metric
+- Too long → cut the most generic or redundant clause
+
+Rules: past tense verb, no pronouns, one whole number, outcome at end (not "resulting in"), one sentence.
+
+Output ONLY:
+{"points":[{"skillId":${skill.id},"version":<v>,"text":"...","wasRetried":true}]}`, 2000);
+    return parseJ(raw).points || [];
+  } catch(e) { return []; }
+}
+
+function renderResearch(data) {
+  document.getElementById('research-content').innerHTML = data.skills.map(s => `
+    <div class="skill-block">
+      <div class="skill-header">
+        <span class="skill-name">S${s.id} — ${s.overarching}</span>
+        ${s.seeded ? `<span class="badge b-seeded">seeded: ${s.seedTopic}</span>` : ''}
+      </div>
+      <div class="skill-body">
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">${s.description}</p>
+        ${s.subs.map(sub=>`<p class="research-sub">${sub.id} — ${sub.text}</p>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderSkeletons() {
+  document.getElementById('points-content').innerHTML = researchData.skills.map(s => `
+    <div class="skill-block" id="sb-${s.id}">
+      <div class="skill-header">
+        <div class="skill-header-left">
+          <div class="dot dot-pending" id="dot-${s.id}"></div>
+          <span class="skill-name">S${s.id} — ${s.overarching}</span>
+          ${s.seeded ? `<span class="badge b-seeded">seeded: ${s.seedTopic}</span>` : ''}
+        </div>
+        <button class="btn-regen" id="rb-${s.id}" onclick="regenSkill(${s.id})" disabled>Regenerate</button>
+      </div>
+      <div class="skill-body" id="sp-${s.id}"><p style="font-size:13px;color:var(--text-hint);">Pending...</p></div>
+    </div>`).join('');
+}
+
+function updateDot(id, state) {
+  const d = document.getElementById(`dot-${id}`);
+  if (d) d.className = `dot dot-${state}`;
+}
+
+function renderSkillPoints(id) {
+  const c = document.getElementById(`sp-${id}`);
+  const btn = document.getElementById(`rb-${id}`);
+  if (!c) return;
+  const pts = (allPoints[id]||[]).sort((a,b)=>a.version-b.version);
+  if (!pts.length) { c.innerHTML = '<p style="font-size:13px;color:var(--text-hint);">No points yet.</p>'; return; }
+  c.innerHTML = pts.map(p => {
+    const n = p.text.length, v = inRange(n);
+    const badge = p.valid===false ? `<span class="badge b-warn">needs regen</span>`
+      : p.wasRetried ? `<span class="badge b-fixed">auto-fixed</span>`
+      : v ? `<span class="badge b-valid">in range</span>`
+      : `<span class="badge b-warn">out of range</span>`;
+    return `<div class="point-group">
+      <div class="point-label">Version ${p.version} &nbsp;${badge}</div>
+      <div class="point-text" onclick="copyPoint(this,${JSON.stringify(p.text)})">${p.text}</div>
+      <div class="char-bar ${barCls(n)}" style="width:${barW(n)}%"></div>
+      <div class="char-label ${charCls(n)}">${n} chars — ${!v?(n<MIN?`${MIN-n} short of minimum`:`${n-MAX} over maximum`):'within 225–300 range'}</div>
+    </div>`;
+  }).join('');
+  if (btn) btn.disabled = false;
+}
+
+function updateStats() {
+  const pts = Object.values(allPoints).flat();
+  const total = pts.length, valid = pts.filter(p=>inRange(p.text.length)).length, retried = pts.filter(p=>p.wasRetried).length;
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-pill">${total} points</div>
+    <div class="stat-pill" style="color:#1A7A54;">${valid} in range</div>
+    ${total-valid>0?`<div class="stat-pill" style="color:var(--err);">${total-valid} need review</div>`:''}
+    ${retried>0?`<div class="stat-pill" style="color:var(--info);">${retried} auto-fixed</div>`:''}`;
+}
+
+async function regenSkill(id) {
+  const btn = document.getElementById(`rb-${id}`);
+  if (btn) { btn.disabled=true; btn.textContent='Regenerating...'; }
+  updateDot(id, 'working');
+  const c = document.getElementById(`sp-${id}`);
+  if (c) c.innerHTML='<p style="font-size:13px;color:var(--text-hint);">Regenerating...</p>';
+  const haveRole = document.getElementById('have-role').value.trim();
+  const getRole = document.getElementById('get-role').value.trim();
+  const skill = researchData.skills.find(s=>s.id===id);
+  try {
+    allPoints[id] = await genAndValidate(haveRole, getRole, skill);
+    updateDot(id, 'done');
+    renderSkillPoints(id);
+    updateStats();
+  } catch(e) {
+    showError(`Regen failed for S${id}: ${e.message}`);
+    updateDot(id, 'pending');
+  }
+  if (btn) { btn.disabled=false; btn.textContent='Regenerate'; }
+}
+
+function copyPoint(el, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    el.classList.add('copied');
+    setTimeout(() => el.classList.remove('copied'), 1200);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    el.classList.add('copied');
+    setTimeout(() => el.classList.remove('copied'), 1200);
+  });
+}
+</script>
+</body>
+</html>
